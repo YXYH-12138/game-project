@@ -134,7 +134,7 @@ interface Bullet {
 //   }
 // }
 
-interface BulletOption {
+interface AutoShootOption {
   bulletSpeed?: number;
   fireInterval?: number;
 }
@@ -157,7 +157,7 @@ export class AutoShootPlugin implements IGamePlugin {
   /** 射击方向 */
   private _shootDirection = { x: 0, y: -1 };
 
-  constructor(player: Player, { bulletSpeed, fireInterval }: BulletOption = {}) {
+  constructor(player: Player, { bulletSpeed, fireInterval }: AutoShootOption = {}) {
     this._player = player;
     this._bulletSpeed = bulletSpeed ?? 6;
     this._fireInterval = fireInterval ?? 50;
