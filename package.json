@@ -8,6 +8,7 @@
     "dev": "vp run website#dev"
   },
   "devDependencies": {
+    "@pixi/devtools": "^2.0.1",
     "vite-plus": "catalog:"
   },
   "engines": {

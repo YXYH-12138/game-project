@@ -1,94 +1,116 @@
-import { Assets, Container, Sprite, type Application, type TickerCallback } from "pixi.js";
+import { Assets, Container, Sprite, Texture, type Application } from "pixi.js";
+import { Movement } from "./move";
+import { AutoShootPlugin } from "./bullet";
+import type { GameCore, IGamePlugin } from "../core/game";
 
-export interface IPlayerPlugin {
-  id: string;
-  install(player: Player): void;
-  start(): void;
-  stop(): void;
-  destroy(): void;
+export interface IPlayerOption {
+  width?: number;
+  height?: number;
+  direction: Direction;
+  textureLoad?: () => Promise<Texture>;
 }
 
-export class Player {
-  /** 应用 */
-  app: Application;
-  /** 玩家容器 */
-  container: Container;
+export const enum Direction {
+  TOP = "TOP",
+  BOTTOM = "BOTTOM",
+  LEFT = "LEFT",
+  RIGHT = "RIGHT",
+}
 
-  /** 插件 */
-  private plugins: Map<string, IPlayerPlugin>;
+const DEFAULT_OPTION = {
+  direction: Direction.TOP,
+  width: 40,
+  height: 40,
+  textureLoad: () => Assets.load("https://pixijs.com/assets/bunny.png"),
+};
 
-  private promise: Promise<void>;
-  private resolve: () => void;
+export class Player extends Container {
+  option: Required<IPlayerOption>;
 
-  constructor(app: Application) {
-    this.app = app;
-    this.container = new Container();
-    this.plugins = new Map();
-    app.stage.addChild(this.container);
-
-    this.promise = new Promise((resolve) => {
-      this.resolve = resolve;
-    });
+  constructor(app: Application, option?: IPlayerOption) {
+    super();
+    this.option = Object.assign({}, DEFAULT_OPTION, option);
+    app.stage.addChild(this);
 
     this.init();
   }
 
-  use<T extends IPlayerPlugin>(plugin: T) {
-    this.plugins.set(plugin.id, plugin);
-    plugin.install(this);
-    return this;
-  }
-
-  remove(id: string) {
-    const { plugins } = this;
-    const plugin = plugins.get(id);
-    if (plugin) {
-      plugin.destroy();
-      plugins.delete(id);
+  setDirection(direction: Direction) {
+    switch (direction) {
+      case Direction.BOTTOM:
+        this.rotation = Math.PI;
+        break;
+      case Direction.LEFT:
+        this.rotation = -Math.PI / 2;
+        break;
+      case Direction.RIGHT:
+        this.rotation = Math.PI / 2;
+        break;
+      default:
+        this.rotation = 0;
+        break;
     }
-    return this;
   }
 
-  async start() {
-    await this.promise;
-    this.plugins.forEach((plugin) => plugin.start());
+  setPosition(x: number, y: number) {
+    this.x = x;
+    this.y = y;
   }
 
-  stop() {
-    this.plugins.forEach((plugin) => plugin.stop());
-  }
-
-  destroy() {
-    this.plugins.forEach((plugin) => plugin.destroy());
-    this.container.removeChildren();
-  }
-
-  addTicker<T>(fn: TickerCallback<T>) {
-    this.app.ticker.add(fn);
-  }
-
-  removeTicker<T>(fn: TickerCallback<T>) {
-    this.app.ticker.remove(fn);
-  }
-
-  private async init() {
-    const { container, app } = this;
+  async init() {
+    const { option } = this;
+    const { width, height, textureLoad } = option;
     // Load the bunny texture
-    const texture = await Assets.load("https://pixijs.com/assets/bunny.png");
+    const texture = await textureLoad();
 
     const bunny = new Sprite(texture);
-    bunny.width = 40;
-    bunny.height = 40;
-    container.addChild(bunny);
+    bunny.width = width;
+    bunny.height = height;
+    this.addChild(bunny);
 
-    // Move the container to the center
-    container.x = app.screen.width / 2;
-    container.y = app.screen.height / 2;
+    this.setDirection(option.direction);
 
     // Center the bunny sprites in local container coordinates
-    container.pivot.x = container.width / 2;
-    container.pivot.y = container.height / 2;
-
-    this.resolve();
+    this.pivot.x = this.width / 2;
+    this.pivot.y = this.height / 2;
   }
 }
+
+export type PlayerContext = {
+  player: Player;
+};
+
+function initPlayer(): IGamePlugin {
+  const install = (game: GameCore<PlayerContext>) => {
+    const { app } = game;
+    const player = new Player(app);
+    // const { container } = player;
+
+    // Move the container to the center
+    player.setPosition(app.screen.width / 2, app.screen.height / 2);
+
+    game.use(new Movement({ player })).use(new AutoShootPlugin(player)).inject({ player });
+  };
+
+  return { install };
+}
+
+// 在玩家位置留下粒子轨迹
+// const particleTrailPlugin: IGamePlugin = {
+//   id: "particle-trail",
+//   install(game: GameCore<PlayerContext>) {
+//     const { player } = game.context;
+//     game.addTicker(() => {
+//       // 在玩家位置留下粒子轨迹
+//       const particle = new Graphics().circle(0, 0, 2).fill({ color: 0x00ff00, alpha: 0.5 });
+
+//       particle.position.set(player.container.x, player.container.y);
+//       game.app.stage.addChild(particle);
+
+//       // 1秒后消失
+//       setTimeout(() => particle.destroy(), 500);
+//     });
+//   },
+// };
+
+export const playerPlugins = [initPlayer];

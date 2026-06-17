@@ -24,6 +24,9 @@ importers:
         specifier: ^8.19.0
         version: 8.19.0
     devDependencies:
+      '@pixi/devtools':
+        specifier: ^2.0.1
+        version: 2.0.1(pixi.js@8.19.0)
       vite-plus:
         specifier: 'catalog:'
         version: 0.1.24(@types/node@25.9.2)(jiti@2.7.0)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0))(yaml@2.9.0)
@@ -362,6 +365,11 @@ packages:
 
   '@pixi/colord@2.9.6':
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
+
+  '@pixi/devtools@2.0.1':
+    resolution: {integrity: sha512-TFCqNkJoLNYHDELgQ3bKWvA33twWpoUhQB8Y+hneBdDBunRsqZ5ZzwH7+6E5eVaVn7eeLAXHs9QGRGsxM0fRlw==}
+    peerDependencies:
+      pixi.js: ^7 || ^8
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
@@ -1188,6 +1196,10 @@ snapshots:
   '@oxlint/plugins@1.61.0': {}
 
   '@pixi/colord@2.9.6': {}
+
+  '@pixi/devtools@2.0.1(pixi.js@8.19.0)':
+    dependencies:
+      pixi.js: 8.19.0
 
   '@polka/url@1.0.0-next.29': {}
 

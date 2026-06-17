@@ -1,14 +1,21 @@
 import { mapKeys } from "es-toolkit";
 import { toLower } from "es-toolkit/compat";
-import type { IPlayerPlugin, Player } from "./player";
 import type { Ticker } from "pixi.js";
+import type { GameCore, IGamePlugin } from "../core/game";
+import type { Player } from "./player";
 
 type KeytoMap = Record<"UP" | "DOWN" | "LEFT" | "RIGHT", any>;
 
-export class MovementPlugin implements IPlayerPlugin {
-  id = "movement";
+interface MovementOption {
+  player: Player;
+  speed?: number;
+  keytoMap?: KeytoMap;
+}
 
+export class Movement implements IGamePlugin {
+  private _game: GameCore;
   private _player: Player;
+
   private _speed: number;
 
   private _keys: Set<string>;
@@ -16,14 +23,15 @@ export class MovementPlugin implements IPlayerPlugin {
 
   private cleanEvent: () => void | null;
 
-  constructor(speed = 4, keytoMap?: KeytoMap) {
-    this._speed = speed;
+  constructor({ player, speed, keytoMap }: MovementOption) {
+    this._player = player;
+    this._speed = speed ?? 4;
     this._keytoMap = keytoMap ?? { UP: "w", DOWN: "s", LEFT: "a", RIGHT: "d" };
     this._keys = new Set();
   }
 
-  install(player: Player) {
-    this._player = player;
+  install(game: GameCore) {
+    this._game = game;
   }
 
   start() {
@@ -32,7 +40,7 @@ export class MovementPlugin implements IPlayerPlugin {
   }
 
   stop() {
-    this._player.removeTicker(this.update);
+    this._game.removeTicker(this.update);
     this._keys.clear();
   }
 
@@ -47,8 +55,8 @@ export class MovementPlugin implements IPlayerPlugin {
   }
 
   private loop() {
-    const { _player } = this;
-    _player.addTicker(this.update);
+    const { _game } = this;
+    _game.addTicker(this.update);
   }
 
   private update = (ticker: Ticker) => {
@@ -66,8 +74,8 @@ export class MovementPlugin implements IPlayerPlugin {
       // 计算向量长度（模长）。
       const len = Math.sqrt(dx * dx + dy * dy);
       // 归一化向量。
-      _player.container.x += (dx / len) * this._speed * dt;
-      _player.container.y += (dy / len) * this._speed * dt;
+      _player.x += (dx / len) * this._speed * dt;
+      _player.y += (dy / len) * this._speed * dt;
     }
   };
 
